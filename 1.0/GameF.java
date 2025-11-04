@@ -8,6 +8,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 
 public class GameF extends JFrame {
 	public GameF() {
@@ -35,9 +36,38 @@ public class GameF extends JFrame {
             	  System.exit(0);
             }
          });
+        
+        // 添加主题菜单
+        JMenu themeMenu = new JMenu("主题");
+        JMenuItem blackTheme = new JMenuItem("黑色主题");
+        blackTheme.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent e){
+                panel.setTheme(Color.BLACK);
+                panel.repaint();
+            }
+        });
+        JMenuItem whiteTheme = new JMenuItem("白色主题");
+        whiteTheme.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent e){
+                panel.setTheme(Color.WHITE);
+                panel.repaint();
+            }
+        });
+        JMenuItem grayTheme = new JMenuItem("灰色主题");
+        grayTheme.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent e){
+                panel.setTheme(Color.GRAY);
+                panel.repaint();
+            }
+        });
+        
         menuBar.add(menu);
         menu.add(menuStart);
         menu.add(menuExit);
+        menuBar.add(themeMenu);
+        themeMenu.add(blackTheme);
+        themeMenu.add(whiteTheme);
+        themeMenu.add(grayTheme);
         this.setJMenuBar(menuBar);
       }
 }

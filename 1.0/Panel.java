@@ -3,19 +3,12 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.net.URL;
 
-import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 
 public class Panel extends JPanel {//672是棋盘上能成五子的数目
-	private URL blackImgURL = GobangGame.class.getResource("green.png");
-	private ImageIcon black = new ImageIcon(blackImgURL);
-	private URL whiteImgURL = GobangGame.class.getResource("red.png");
-	private ImageIcon white = new ImageIcon(whiteImgURL);
-	private URL currentImgURL = GobangGame.class.getResource("new_red.png");
-	private ImageIcon current = new ImageIcon(currentImgURL);
 	private int i, j, k, m, n, icount;
+	private Color themeColor = Color.LIGHT_GRAY; // 默认主题颜色
 	private int[][] board = new int[16][16];//0为玩家棋子，1是电脑棋子，2是空
 	private boolean[][][] ptable = new boolean[16][16][672];
 	private boolean[][][] ctable = new boolean[16][16][672];
@@ -33,9 +26,23 @@ public class Panel extends JPanel {//672是棋盘上能成五子的数目
 		addMouseListener(new Xiazi());
 		this.ResetGame();
 	}
+	
+	// 设置主题颜色
+	public void setTheme(Color color) {
+		this.themeColor = color;
+		this.setBackground(color);
+	}
 
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
+		
+		// 根据主题颜色设置棋盘线条和文字颜色
+		if (themeColor.equals(Color.BLACK)) {
+			g.setColor(Color.WHITE);
+		} else {
+			g.setColor(Color.BLACK);
+		}
+		
 		for (int i = 0; i < 16; i++)
 			for (int j = 0; j < 16; j++) {
 				g.drawLine(50, 50 + j * 30, 500, 50 + j * 30);
@@ -228,10 +235,18 @@ public class Panel extends JPanel {//672是棋盘上能成五子的数目
 	public void mouseClick() {
 		if (!this.over)
 			if (this.player) {
+				// 检查点击是否在棋盘范围内
 				if (this.oldx < 520 && this.oldy < 520) {
 					int m1 = m, n1 = n;
 					m = (oldx - 33) / 30;
 					n = (oldy - 33) / 30;
+					
+					// 检查落点是否在棋盘范围内
+					if (m < 0 || m > 15 || n < 0 || n > 15) {
+						javax.swing.JOptionPane.showMessageDialog(this, "Please click within the chessboard!", "Hint", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+						return;
+					}
+					
 					if (this.board[m][n] == 2) {
 						this.bout++;
 						this.board[m][n] = 0;
@@ -281,52 +296,37 @@ public class Panel extends JPanel {//672是棋盘上能成五子的数目
 			g.setFont(new Font("华文行楷", 0, 20));
 			g.setColor(Color.RED);
 			// 画出当前棋盘所有棋子
-			for (i = 0; i <= 15; i++)
-				for (j = 0; j <= 15; j++) { // 如果board元素值为0，则该坐标处为黑子
-					if (this.board[i][j] == 0) {
-						g.drawImage(
-								black.getImage(),
-								i * 30 + 31,
-								j * 30 + 31,
-								black.getImage().getWidth(
-										black.getImageObserver()) - 3,
-								black.getImage().getHeight(
-										black.getImageObserver()) - 3, black
-										.getImageObserver());
-					}
-					// 如果board元素值为1，则该坐标处为白子
-					if (this.board[i][j] == 1) {
-						g.drawImage(
-								white.getImage(),
-								i * 30 + 31,
-								j * 30 + 31,
-								white.getImage().getWidth(
-										white.getImageObserver()) - 3,
-								white.getImage().getHeight(
-										white.getImageObserver()) - 3, white
-										.getImageObserver());
-					}
+		for (i = 0; i <= 15; i++)
+			for (j = 0; j <= 15; j++) {
+				// 如果board元素值为0，则该坐标处为黑子
+				if (this.board[i][j] == 0) {
+					g.setColor(Color.BLACK);
+					g.fillOval(i * 30 + 31, j * 30 + 31, 24, 24);
 				}
-			// 画出白子（电脑）当前所下子，便于辨认
-			if (this.board[m][n] != 2)
-				g.drawImage(
-						current.getImage(),
-						m * 30 + 31,
-						n * 30 + 31,
-						current.getImage().getWidth(current.getImageObserver()) - 4,
-						current.getImage()
-								.getHeight(current.getImageObserver()) - 4,
-						current.getImageObserver());
-			// 判断输赢情况
-			// 人赢
-			if (this.pwin)
-				g.drawString("您太厉害了！再来一次请重新开始游戏..", 20, 200);
-			// 电脑赢
-			if (this.cwin)
-				g.drawString("很遗憾，你输了!再来一次请重新开始游戏..", 84, 190);
-			// 平局
-			if (this.tie)
-				g.drawString("不分胜负!再来一次请重新开始游戏..", 80, 200);
+				// 如果board元素值为1，则该坐标处为白子
+				if (this.board[i][j] == 1) {
+					g.setColor(Color.WHITE);
+					g.fillOval(i * 30 + 31, j * 30 + 31, 24, 24);
+					// 给白子添加黑色边框，在白色主题下更明显
+					g.setColor(Color.BLACK);
+					g.drawOval(i * 30 + 31, j * 30 + 31, 23, 23);
+				}
+			}
+		// 画出当前所下子的标记，便于辨认
+		if (this.board[m][n] != 2) {
+			g.setColor(Color.RED);
+			g.drawRect(m * 30 + 30, n * 30 + 30, 26, 26);
+		}
+		// 判断输赢情况
+		// 人赢
+		if (this.pwin)
+			g.drawString("You win! Click 'Start Game' to play again.", 20, 200);
+		// 电脑赢
+		if (this.cwin)
+			g.drawString("Computer wins! Click 'Start Game' to play again.", 20, 200);
+		// 平局
+		if (this.tie)
+			g.drawString("It's a tie! Click 'Start Game' to play again.", 20, 200);
 			g.dispose();
 		}
 	}
