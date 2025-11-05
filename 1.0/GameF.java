@@ -61,6 +61,23 @@ public class GameF extends JFrame {
             }
         });
         
+        // 添加先手选择菜单
+        JMenu firstHandMenu = new JMenu("先手选择");
+        JMenuItem playerFirst = new JMenuItem("玩家先手（黑子）");
+        playerFirst.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent e){
+                panel.setPlayerFirst(true);
+                panel.repaint();
+            }
+        });
+        JMenuItem computerFirst = new JMenuItem("电脑先手（白子）");
+        computerFirst.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent e){
+                panel.setPlayerFirst(false);
+                panel.repaint();
+            }
+        });
+        
         menuBar.add(menu);
         menu.add(menuStart);
         menu.add(menuExit);
@@ -68,6 +85,9 @@ public class GameF extends JFrame {
         themeMenu.add(blackTheme);
         themeMenu.add(whiteTheme);
         themeMenu.add(grayTheme);
+        menuBar.add(firstHandMenu);
+        firstHandMenu.add(playerFirst);
+        firstHandMenu.add(computerFirst);
         this.setJMenuBar(menuBar);
       }
 }

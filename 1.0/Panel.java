@@ -3,8 +3,10 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
 public class Panel extends JPanel {//672是棋盘上能成五子的数目
 	private int i, j, k, m, n, icount;
@@ -21,10 +23,22 @@ public class Panel extends JPanel {//672是棋盘上能成五子的数目
 	private int pcount, ccount;//玩家、电脑各自的棋子数目
 	private boolean player, computer, over, pwin, cwin, tie, start;//over结束，tie平局
 	private int mat, nat, mde, nde;
+	private boolean isPlayerFirst = true; // 新增：玩家是否先手
+	private Timer computerTimer; // 新增：用于延迟白子落子
+	private List<int[]> winningLine = new ArrayList<>(); // 新增：存储胜利的五颗棋子坐标
 
 	public Panel() {
 		addMouseListener(new Xiazi());
 		this.ResetGame();
+		
+		// 初始化电脑延迟落子计时器
+		computerTimer = new Timer(500, e -> {
+			if (computer && !over) {
+				ComTurn();
+				repaint();
+			}
+		});
+		computerTimer.setRepeats(false);
 	}
 	
 	// 设置主题颜色
@@ -122,7 +136,7 @@ public class Panel extends JPanel {//672是棋盘上能成五子的数目
 		for (i = 0; i < 2; i++) // 初始化黑子白子上的每个权值上的连子数
 			for (j = 0; j < 672; j++)
 				this.win[i][j] = 0;
-		this.player = true;
+		this.player = isPlayerFirst; // 根据选择决定谁先手
 		this.icount = 0;
 		this.ccount = 0;
 		this.pcount = 0;
@@ -132,6 +146,13 @@ public class Panel extends JPanel {//672是棋盘上能成五子的数目
 		this.cwin = false;
 		this.tie = false;
 		this.bout = 1;
+		winningLine.clear(); // 清空胜利棋子记录
+	}
+	
+	// 新增：设置玩家是否先手
+	public void setPlayerFirst(boolean isFirst) {
+		this.isPlayerFirst = isFirst;
+		ResetGame(); // 重新开始游戏
 	}
 
 	public void ComTurn() { // 找出电脑（白子）最佳落子点
@@ -275,12 +296,24 @@ public class Panel extends JPanel {//672是棋盘上能成五子的数目
 
 	public void updatePaint(Graphics g) {
 		if (!this.over) { // 如果是轮到电脑下
-			if (this.computer)
-				this.ComTurn(); // 得到最佳下子点
+			if (this.computer && !computerTimer.isRunning()) {
+				// 延迟500毫秒后执行电脑落子
+				computerTimer.start();
+			} else if (!computerTimer.isRunning()) {
 			// 遍历当前棋盘上的五连子情况，判断输赢
 			for (i = 0; i <= 1; i++)
 				for (j = 0; j < 672; j++) {
-					if (this.win[i][j] == 5)
+					if (this.win[i][j] == 5) {
+						// 记录胜利的五颗棋子坐标
+						winningLine.clear();
+						for (int x = 0; x < 16; x++) {
+							for (int y = 0; y < 16; y++) {
+								if ((i == 0 && ptable[x][y][j]) || (i == 1 && ctable[x][y][j])) {
+									winningLine.add(new int[]{x, y});
+								}
+							}
+						}
+						
 						if (i == 0) { // 人赢
 							this.pwin = true;
 							this.over = true; // 游戏结束
@@ -290,9 +323,11 @@ public class Panel extends JPanel {//672是棋盘上能成五子的数目
 							this.over = true;
 							break;
 						}
+					}
 					if (this.over) // 一遇到五连子退出棋盘遍历
-						break;
-				}
+				break;
+			}
+		}
 			g.setFont(new Font("华文行楷", 0, 20));
 			g.setColor(Color.RED);
 			// 画出当前棋盘所有棋子
@@ -302,6 +337,11 @@ public class Panel extends JPanel {//672是棋盘上能成五子的数目
 				if (this.board[i][j] == 0) {
 					g.setColor(Color.BLACK);
 					g.fillOval(i * 30 + 31, j * 30 + 31, 24, 24);
+					// 在黑色主题下给黑子添加白色边框，使其更明显
+					if (themeColor.equals(Color.BLACK)) {
+						g.setColor(Color.WHITE);
+						g.drawOval(i * 30 + 31, j * 30 + 31, 23, 23);
+					}
 				}
 				// 如果board元素值为1，则该坐标处为白子
 				if (this.board[i][j] == 1) {
@@ -317,16 +357,28 @@ public class Panel extends JPanel {//672是棋盘上能成五子的数目
 			g.setColor(Color.RED);
 			g.drawRect(m * 30 + 30, n * 30 + 30, 26, 26);
 		}
+		
+		// 胜利时圈出五颗棋子
+		if (over && !tie) {
+			g.setColor(Color.GREEN);
+			g.setFont(new Font("黑体", Font.BOLD, 20));
+			for (int[] pos : winningLine) {
+				int x = pos[0];
+				int y = pos[1];
+				g.drawOval(x * 30 + 25, y * 30 + 25, 36, 36);
+			}
+		}
+		
 		// 判断输赢情况
 		// 人赢
 		if (this.pwin)
-			g.drawString("You win! Click 'Start Game' to play again.", 20, 200);
+			g.drawString("恭喜你赢了！点击'开始游戏'重新开始。", 20, 200);
 		// 电脑赢
 		if (this.cwin)
-			g.drawString("Computer wins! Click 'Start Game' to play again.", 20, 200);
+			g.drawString("电脑赢了！点击'开始游戏'重新开始。", 20, 200);
 		// 平局
 		if (this.tie)
-			g.drawString("It's a tie! Click 'Start Game' to play again.", 20, 200);
+			g.drawString("平局！点击'开始游戏'重新开始。", 20, 200);
 			g.dispose();
 		}
 	}
